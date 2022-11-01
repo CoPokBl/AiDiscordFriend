@@ -7,30 +7,30 @@ using GeneralPurposeLib;
 namespace AiDiscordFriend; 
 
 public class Bot {
-    private static DiscordSocketClient? _client;
+    public static DiscordSocketClient? Client;
 
     public static bool IsMe(SocketUser user) {
-        return user.Id == _client!.CurrentUser.Id;
+        return user.Id == Client!.CurrentUser.Id;
     }
     
     public static bool IsMe(IUser user) {
-        return user.Id == _client!.CurrentUser.Id;
+        return user.Id == Client!.CurrentUser.Id;
     }
 
     public async Task Run() {
         DiscordSocketConfig config = new() {
             GatewayIntents = GatewayIntents.GuildMessages | GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
         };
-        _client = new DiscordSocketClient(config);
+        Client = new DiscordSocketClient(config);
 
         // Events
-        _client.Log += Log;
-        _client.Ready += ClientReady;
-        _client.SlashCommandExecuted += SlashCommandHandler;
-        _client.MessageReceived += MessageHandler.OnMessage;
+        Client.Log += Log;
+        Client.Ready += ClientReady;
+        Client.SlashCommandExecuted += SlashCommandHandler;
+        Client.MessageReceived += MessageHandler.OnMessage;
 
-        await _client.LoginAsync(TokenType.Bot, Program.Config!["token"]);
-        await _client.StartAsync();
+        await Client.LoginAsync(TokenType.Bot, Program.Config!["token"]);
+        await Client.StartAsync();
         
         // Block this task until the program is closed.
         await Task.Delay(-1);
@@ -39,7 +39,7 @@ public class Bot {
     
     private Task SlashCommandHandler(SocketSlashCommand command) {
         try {
-            CommandManager.Invoke(command, _client!);
+            CommandManager.Invoke(command, Client!);
         }
         catch (Exception e) {
             Logger.Error(e);
@@ -49,7 +49,8 @@ public class Bot {
     
     private async Task ClientReady() {
         Logger.Debug("Client ready");
-        await _client!.SetGameAsync("I hate people");
+        await Client!.SetGameAsync("I hate people");
+        await Client.SetStatusAsync(UserStatus.Idle);
     }
     
     private static Task Log(LogMessage msg) {

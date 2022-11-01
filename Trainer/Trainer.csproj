@@ -12,15 +12,4 @@
       <PackageReference Include="GeneralPurposeLib" Version="1.0.1" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Update="personality.txt">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-    
-    <!-- Don't compile anything in the trainer folder -->
-    <ItemGroup>
-      <Compile Remove="trainer\**" />
-    </ItemGroup>
-
 </Project>

@@ -16,9 +16,9 @@ public static class DmHandler {
         }
         MessageHandler.LastMessages.Add(DateTime.Now);
         
-        // Gather the last 10 messages to use as context for ai
+        // Gather the last 5 messages to use as context for ai
         IEnumerable<IMessage>? messages = await msg.Channel.GetMessagesAsync(5).FlattenAsync();
-        IMessage[] messagesArray = messages.ToArray();
+        IMessage[] messagesArray = messages.Reverse().ToArray();
         // Put context into format:
         // Username: Message
         // Username: Message
@@ -26,13 +26,16 @@ public static class DmHandler {
         // Bot: Message
         string currentContext = "\nDate and Time: " + DateTime.Now + "\n" + "\n" + "Discord Channel: " + msg.Channel.Name + "\n";
         string context = currentContext + string.Join("\n", messagesArray.Select(m => 
-            (Bot.IsMe(m.Author) ? "Bot: " : m.Author.Username) + ": " + m.Content));
-        context += "\n" + (Bot.IsMe(msg.Author) ? "Bot: " : msg.Author.Username) + ": " + msg.Content;
-        
+            (Bot.IsMe(m.Author) ? "Bot" : m.Author.Username) + ": " + m.Content));
+
         await msg.Channel.TriggerTypingAsync();
         
         // Send the context to the ai and get a response
         string resp = await AiManager.GetAiResponse(context, msg.Author);
+        if (resp == "") {
+            Logger.Debug("No response from ai");
+            return;
+        }
         
         // Send the response to the user
         await msg.Channel.SendMessageAsync(resp);

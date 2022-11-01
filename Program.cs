@@ -17,7 +17,8 @@ internal static class Program {
         { "active_period_length_variation", "20" },
         { "down_time_length_minutes", "60" },
         { "down_time_length_variation", "120" },
-        { "messages_per_hour_max", "60" }
+        { "messages_per_hour_max", "60" },
+        { "open_ai_model", "text-davinci-002" }
     };
 
     public static int Main(string[] args) {
@@ -47,6 +48,7 @@ internal static class Program {
         // This event gets fired when the user tried to stop the bot with Ctrl+C or similar.
         Console.CancelKeyPress += (_, _) => {
             Logger.Info("Shutting down...");
+            AiManager.Save();
             Logger.WaitFlush();
             Environment.Exit(0);
         };
