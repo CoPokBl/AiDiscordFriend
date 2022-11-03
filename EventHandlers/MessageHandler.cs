@@ -10,12 +10,32 @@ public static class MessageHandler {
     private static readonly Random Random = new();
     private static DateTime _periodEnd = DateTime.Now;
     private static bool _isActive;
+    private static bool _tooManyMessages;
 
     public static async Task OnMessage(SocketMessage msg) {
         
         if (Bot.IsMe(msg.Author)) {
             return;
         }
+        
+        // Remove all messages older than an hour
+        LastMessages.RemoveAll(x => x < DateTime.Now.AddHours(-1));
+        // If there have been more than 60 messages in the last hour, ignore the message
+        if (LastMessages.Count > int.Parse(Program.Config!["messages_per_hour_max"])) {
+            if (_tooManyMessages) {
+                return;
+            }
+            _tooManyMessages = true;
+            Logger.Warn("Too many messages in the last hour, ignoring messages");
+            await Bot.Client!.SetStatusAsync(UserStatus.DoNotDisturb);
+            return;
+        }
+        if (_tooManyMessages) {
+            await Bot.Client!.SetStatusAsync(_isActive ? UserStatus.Online : UserStatus.Idle);
+            _tooManyMessages = false;
+            Logger.Info("Messages are no longer being ignored");
+        }
+        LastMessages.Add(DateTime.Now);
 
         bool isDm = false;
         if (msg.Channel is IDMChannel) {
@@ -54,14 +74,7 @@ public static class MessageHandler {
         if (isDm) {
             return;
         }
-        
-        // If there have been more than 60 messages in the last hour, ignore the message
-        if (LastMessages.Count > int.Parse(Program.Config!["messages_per_hour_max"])) {
-            // Remove all messages older than an hour
-            LastMessages.RemoveAll(x => x < DateTime.Now.AddHours(-1));
-        }
-        LastMessages.Add(DateTime.Now);
-        
+
         // Gather the last 10 messages to use as context for ai
         IEnumerable<IMessage>? messages = await msg.Channel.GetMessagesAsync(5).FlattenAsync();
         IMessage[] messagesArray = messages.Reverse().ToArray();
